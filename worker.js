@@ -1,3 +1,5 @@
+const OWNER_ID = 6793301579; // 
+
 export default {
   async fetch(request, env) {
     if (request.method !== "POST") {
@@ -5,28 +7,35 @@ export default {
     }
 
     const update = await request.json();
-
-    if (!update.message) {
-      return new Response("OK");
-    }
-
     const message = update.message;
-    const userId = message.from.id;
+
+    if (!message) return new Response("OK");
+
     const chatId = message.chat.id;
+    const text = message.text || "";
 
-    // ТВОЙ Telegram ID сюда пока НЕ вставляем.
-    // После настройки добавим его безопасно через Cloudflare Secret.
-
-    if (message.text === "/start") {
+    if (text === "/start") {
       await sendMessage(
         env.BOT_TOKEN,
         chatId,
-        "👋 Привет!\n\nНапиши здесь своё сообщение — оно будет отправлено анонимно владельцу бота.",
+        "👋 Привет!\n\nНапиши мне сообщение, и я анонимно передам его владельцу этого бота."
       );
       return new Response("OK");
     }
 
-    // Здесь позже будет отправка сообщения ТЕБЕ.
+    // Отправляем сообщение владельцу
+    await sendMessage(
+      env.BOT_TOKEN,
+      OWNER_ID,
+      `💌 Анонимное сообщение:\n\n${text}`
+    );
+
+    await sendMessage(
+      env.BOT_TOKEN,
+      chatId,
+      "✅ Сообщение отправлено анонимно!"
+    );
+
     return new Response("OK");
   },
 };
@@ -42,4 +51,4 @@ async function sendMessage(token, chatId, text) {
       text: text,
     }),
   });
-}
+      }
